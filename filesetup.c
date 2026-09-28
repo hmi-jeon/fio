@@ -715,6 +715,11 @@ static int file_close_shadow_fds(struct thread_data *td)
 	return num_closed;
 }
 
+static inline bool td_never_writes(struct thread_data *td)
+{
+	return td_rw(td) && !td->o.rwmix[DDIR_WRITE];
+}
+
 int generic_open_file(struct thread_data *td, struct fio_file *f)
 {
 	int is_std = 0;
@@ -747,7 +752,7 @@ int generic_open_file(struct thread_data *td, struct fio_file *f)
 
 open_again:
 	if (td_write(td)) {
-		if (!read_only)
+		if (!read_only && !td_never_writes(td))
 			flags |= O_RDWR;
 
 		if (td->o.verify_only) {
